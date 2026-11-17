@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Streamlined Trip & Itinerary Planner</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg: #f1f5f9;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --muted: #64748b;
+            --border: #e2e8f0;
+            --green: #16a34a;
+            --green-bg: #dcfce7;
+            --green-border: #86efac;
+            --red: #dc2626;
+            --red-bg: #fee2e2;
+            --red-border: #fca5a5;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .app-layout {
+            display: grid;
+            grid-template-columns: 1fr 360px;
+            gap: 24px;
+            max-width: 1400px;
+            margin: 0 auto;
+            align-items: start;
+        }
+
+        @media (max-width: 980px) {
+            .app-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
+        }
+
+        h1, h2, h3, h4 {
+            margin-top: 0;
+            color: var(--text);
+        }
+
+        /* Top Trip Header */
+        .trip-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 16px;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .trip-title-inputs {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            flex: 1;
+        }
+
+        .trip-title-inputs input {
+            font-size: 16px;
+            font-weight: 600;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* Manual Status Toggle Bar */
+        .status-control-bar {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .status-control-title {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--muted);
+        }
+
+        .status-toggles {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .toggle-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: white;
+            transition: all 0.15s ease;
+            user-select: none;
+        }
+
+        .toggle-btn:hover {
+            filter: brightness(0.97);
+        }
+
+        .toggle-btn.is-active {
+            background: var(--green-bg);
+            color: var(--green);
+            border-color: var(--green-border);
+        }
+
+        .toggle-btn.is-inactive {
+            background: var(--red-bg);
+            color: var(--red);
+            border-color: var(--red-border);
+        }
+
+        /* Entry Sections */
+        .entry-section {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 18px;
+            margin-bottom: 20px;
+            transition: border-color 0.2s;
+        }
+
+        .entry-section.editing-active {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+        }
+
+        .entry-section h3 {
+            margin-bottom: 12px;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+            font-family: inherit;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 9px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.15s;
+        }
+
+        .btn:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #1e293b;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e1;
+        }
+
+        .btn-edit {
+            background: #e2e8f0;
+            color: #1e293b;
+            padding: 5px 10px;
+            font-size: 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.15s;
+        }
+
+        .btn-edit:hover {
+            background: #cbd5e1;
+        }
+
+        .btn-danger {
+            background: var(--red);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
+        .btn-new-trip {
+            width: 100%;
+            margin-bottom: 16px;
+            padding: 12px;
+            font-size: 15px;
+        }
+
+        /* Saved Items List inside sections */
+        .saved-items {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .saved-item-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            gap: 12px;
+        }
+
+        .saved-item-card.is-being-edited {
+            border-color: var(--primary);
+            background: #eff6ff;
+        }
+
+        .saved-item-info {
+            flex: 1;
+        }
+
+        .saved-item-info strong {
+            color: var(--primary);
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        /* Chronological Itinerary View */
+        .itinerary-box {
+            margin-top: 30px;
+            border-top: 3px solid var(--primary);
+            padding-top: 24px;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 24px;
+            border-left: 3px solid #cbd5e1;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .timeline-item {
+            position: relative;
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            padding: 14px 18px;
+            border-radius: 8px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -31px;
+            top: 18px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--primary);
+            border: 2px solid white;
+        }
+
+        .timeline-item.checkout::before {
+            background: #d97706;
+        }
+
+        .timeline-date {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+
+        .timeline-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .timeline-meta {
+            font-size: 14px;
+            color: var(--muted);
+        }
+
+        /* Bottom Notes Section */
+        .notes-box {
+            margin-top: 28px;
+            border-top: 2px solid var(--border);
+            padding-top: 20px;
+        }
+
+        .notes-box textarea {
+            width: 100%;
+            min-height: 140px;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: vertical;
+            background: #ffffff;
+        }
+
+        .notes-box textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+        }
+
+        /* Right Sidebar: All Trips List */
+        .trip-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .trip-card {
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 14px;
+            cursor: pointer;
+            transition: all 0.15s;
+            background: #f8fafc;
+        }
+
+        .trip-card:hover {
+            border-color: #94a3b8;
+        }
+
+        .trip-card.active {
+            border-color: var(--primary);
+            background: #eff6ff;
+        }
+
+        .trip-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 4px;
+        }
+
+        .trip-card-loc {
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .trip-card-dates {
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 12px;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+
+        .status-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 5px 8px;
+            border-radius: 6px;
+        }
+
+        .status-pill.green {
+            background: var(--green-bg);
+            color: var(--green);
+        }
+
+        .status-pill.red {
+            background: var(--red-bg);
+            color: var(--red);
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .dot.green { background: var(--green); }
+        .dot.red { background: var(--red); }
+
+        /* Print Mode: Master Itinerary Output */
+        @media print {
+            body {
+                background: white;
+                color: black;
+                padding: 0;
+            }
+            .app-layout {
+                display: block;
+            }
+            .panel:nth-child(2),
+            .status-control-bar,
+            .entry-section,
+            .header-actions,
+            .btn,
+            .btn-danger,
+            .item-actions {
+                display: none !important;
+            }
+            .panel {
+                border: none;
+                box-shadow: none;
+                padding: 0;
+            }
+            .trip-header {
+                border-bottom: 2px solid #333;
+            }
+            .trip-title-inputs input {
+                border: none;
+                padding: 0;
+                font-size: 20px;
+            }
+            .itinerary-box {
+                border-top: none;
+                margin-top: 10px;
+                padding-top: 0;
+            }
+            .timeline {
+                border-left: 2px solid #666;
+            }
+            .timeline-item {
+                border: 1px solid #ccc;
+                background: #fff;
+                page-break-inside: avoid;
+            }
+            .timeline-item::before {
+                background: #333;
+            }
+            .notes-box {
+                border-top: 2px solid #333;
+                page-break-inside: avoid;
+            }
+            .notes-box textarea {
+                border: none;
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-layout">
+    <!-- CENTER WORKSPACE: CURRENT TRIP -->
+    <div class="panel">
+        <div class="trip-header">
+            <div class="trip-title-inputs">
+                <input type="text" id="current-loc" placeholder="Trip Location (e.g., Rome, Italy)" oninput="updateTripMeta()">
+                <input type="date" id="current-start" onchange="updateTripMeta()" title="Trip Start Date">
+                <input type="date" id="current-end" onchange="updateTripMeta()" title="Trip End Date">
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-secondary" onclick="window.print()">🖨️ Print Itinerary</button>
+                <button class="btn btn-danger" style="padding: 9px 16px; font-size: 14px;" onclick="deleteCurrentTrip()">Delete Trip</button>
+            </div>
+        </div>
+
+        <!-- USER-CONTROLLED BOOKING STATUS TOGGLES -->
+        <div class="status-control-bar">
+            <span class="status-control-title">Trip Readiness (Click to toggle)</span>
+            <div class="status-toggles">
+                <div class="toggle-btn" id="toggle-transport" onclick="toggleStatus('transportBooked')">
+                    <span class="dot" id="dot-transport"></span>
+                    <span id="label-transport">Transport</span>
+                </div>
+                <div class="toggle-btn" id="toggle-lodging" onclick="toggleStatus('lodgingBooked')">
+                    <span class="dot" id="dot-lodging"></span>
+                    <span id="label-lodging">Lodging</span>
+                </div>
+                <div class="toggle-btn" id="toggle-fully" onclick="toggleStatus('fullyBooked')">
+                    <span class="dot" id="dot-fully"></span>
+                    <span id="label-fully">Fully Booked</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 1. TRANSPORT SECTION -->
+        <div class="entry-section" id="trans-section">
+            <h3>✈️🚗 Transport (Flights, Private Auto, Train, Rentals)</h3>
+            <div class="form-row">
+                <select id="trans-type" onchange="toggleCustomTransport()">
+                    <option value="Flight">Flight</option>
+                    <option value="Private Auto">Private Auto</option>
+                    <option value="Rental Car">Rental Car</option>
+                    <option value="Train">Train</option>
+                    <option value="Bus / Shuttle">Bus / Shuttle</option>
+                    <option value="Ferry">Ferry</option>
+                    <option value="Other">Other (Fill in)</option>
+                </select>
+                <input type="text" id="trans-custom" placeholder="Specify Transport Mode" style="display: none;">
+                <input type="datetime-local" id="trans-start" title="Departure Date & Time">
+                <input type="datetime-local" id="trans-end" title="Arrival / Drop-off Date & Time">
+                <input type="text" id="trans-booking" placeholder="Booking / Flight # / Parking notes">
+            </div>
+            <div class="btn-row">
+                <button class="btn" id="trans-submit-btn" onclick="submitTransport()">+ Add Transport</button>
+                <button class="btn btn-secondary" id="trans-cancel-btn" style="display: none;" onclick="cancelEdit('transport')">Cancel Edit</button>
+            </div>
+            <div class="saved-items" id="trans-list"></div>
+        </div>
+
+        <!-- 2. LODGING SECTION (WITH PRECISE CHECK-IN & CHECK-OUT TIMES) -->
+        <div class="entry-section" id="lodge-section">
+            <h3>🏨 Lodging (Check-in & Check-out)</h3>
+            <div class="form-row">
+                <input type="text" id="lodge-name" placeholder="Hotel / Property Name">
+                <input type="datetime-local" id="lodge-start" title="Check-In Date & Time">
+                <input type="datetime-local" id="lodge-end" title="Check-Out Date & Time">
+                <input type="text" id="lodge-loc" placeholder="Address / Location">
+                <input type="text" id="lodge-booking" placeholder="Confirmation # / Booking details">
+            </div>
+            <div class="btn-row">
+                <button class="btn" id="lodge-submit-btn" onclick="submitLodging()">+ Add Lodging</button>
+                <button class="btn btn-secondary" id="lodge-cancel-btn" style="display: none;" onclick="cancelEdit('lodging')">Cancel Edit</button>
+            </div>
+            <div class="saved-items" id="lodge-list"></div>
+        </div>
+
+        <!-- 3. ACTIVITY SECTION -->
+        <div class="entry-section" id="act-section">
+            <h3>🎟️ Activities & Excursions</h3>
+            <div class="form-row">
+                <input type="text" id="act-name" placeholder="Activity / Tour Name">
+                <input type="datetime-local" id="act-start" title="Activity Date & Time">
+                <input type="text" id="act-booking" placeholder="Tickets / Confirmation notes">
+            </div>
+            <div class="btn-row">
+                <button class="btn" id="act-submit-btn" onclick="submitActivity()">+ Add Activity</button>
+                <button class="btn btn-secondary" id="act-cancel-btn" style="display: none;" onclick="cancelEdit('activities')">Cancel Edit</button>
+            </div>
+            <div class="saved-items" id="act-list"></div>
+        </div>
+
+        <!-- 4. GENERATED SEQUENTIAL ITINERARY -->
+        <div class="itinerary-box">
+            <h2>📅 Generated Master Itinerary</h2>
+            <p style="font-size: 13px; color: var(--muted); margin-bottom: 16px;">
+                Sequenced chronologically by date & time: Outbound Transit &rarr; Lodging 1 Check-In &rarr; Inter-stay Transit &rarr; Lodging 2 Check-In/Out &rarr; Return Flight at the back end.
+            </p>
+            <div class="timeline" id="itinerary-timeline"></div>
+        </div>
+
+        <!-- 5. TRIP NOTES SECTION (AT THE BOTTOM OF EACH TRIP) -->
+        <div class="notes-box">
+            <h3>📝 Trip Notes & Reminders</h3>
+            <p style="font-size: 13px; color: var(--muted); margin-bottom: 10px;">
+                Add custom packing notes, entry/visa codes, emergency contacts, or general details for this specific trip.
+            </p>
+            <textarea id="trip-notes" placeholder="Write any notes here (e.g., UK ETA ref #, luggage limits, insurance policy #, emergency contact, packing lists)..." oninput="updateTripNotes()"></textarea>
+        </div>
+    </div>
+
+    <!-- RIGHT SIDEBAR: ALL TRIPS DIRECTORY -->
+    <div class="panel">
+        <h2>🌍 All Trips</h2>
+        <button class="btn btn-new-trip" onclick="createNewTrip()">+ Create New Trip</button>
+        <div class="trip-list" id="sidebar-trip-list"></div>
+    </div>
+</div>
+
+<script>
+    let trips = [
+        {
+            id: 1,
+            location: "UK Tour (London & Edinburgh)",
+            startDate: "2026-10-10",
+            endDate: "2026-10-18",
+            transportBooked: true,
+            lodgingBooked: true,
+            fullyBooked: false,
+            notes: "Passport valid through 2029.\nUK ETA approved (#ETA-90812).\nEmergency number: 999.\nAllianz Insurance Policy: #9843219.",
+            transport: [
+                { type: "Flight", start: "2026-10-10T08:30", end: "2026-10-10T20:45", booking: "BA Flight 178 (Parking: Lot B)" },
+                { type: "Train", start: "2026-10-13T10:00", end: "2026-10-13T14:20", booking: "LNER Rail #XJ892" },
+                { type: "Flight", start: "2026-10-18T13:15", end: "2026-10-18T16:30", booking: "BA Flight 1432 (Return to JFK)" }
+            ],
+            lodging: [
+                { name: "The Resident Covent Garden", start: "2026-10-10T15:00", end: "2026-10-13T11:00", location: "London, UK", booking: "HTL-98432" },
+                { name: "Apex City of Edinburgh Hotel", start: "2026-10-13T15:00", end: "2026-10-18T10:30", location: "Edinburgh, UK", booking: "CONF-77412" }
+            ],
+            activities: [
+                { name: "Westminster Abbey Tour", start: "2026-10-11T14:00", booking: "Booked (2 Tickets)" },
+                { name: "Edinburgh Castle Walk", start: "2026-10-14T10:30", booking: "Tickets needed" }
+            ]
+        },
+        {
+            id: 2,
+            location: "Munich, Germany",
+            startDate: "2026-12-10",
+            endDate: "2026-12-15",
+            transportBooked: false,
+            lodgingBooked: true,
+            fullyBooked: false,
+            notes: "Need to book return train back from Salzburg excursion.",
+            transport: [
+                { type: "Flight", start: "2026-12-10T09:00", end: "2026-12-10T11:30", booking: "LH-4920 (One way only - need return!)" }
+            ],
+            lodging: [
+                { name: "Alpine Plaza Hotel", start: "2026-12-10T14:00", end: "2026-12-15T11:00", location: "Marienplatz 8", booking: "CONF-77412" }
+            ],
+            activities: [
+                { name: "Christmas Market Tour", start: "2026-12-11T17:00", booking: "Booked - #MKT22" }
+            ]
+        }
+    ];
+
+    let currentTripId = 1;
+
+    let editState = {
+        transport: null,
+        lodging: null,
+        activities: null
+    };
+
+    function loadData() {
+        const saved = localStorage.getItem('streamlined_trips_v3');
+        if (saved) {
+            try {
+                trips = JSON.parse(saved);
+                if (trips.length > 0) currentTripId = trips[0].id;
+            } catch(e) {}
+        }
+    }
+
+    function saveData() {
+        localStorage.setItem('streamlined_trips_v3', JSON.stringify(trips));
+    }
+
+    function getCurrentTrip() {
+        return trips.find(t => t.id === currentTripId);
+    }
+
+    /* User-Controlled Status Toggles */
+    function toggleStatus(field) {
+        const trip = getCurrentTrip();
+        if (!trip) return;
+        trip[field] = !trip[field];
+        saveData();
+        renderWorkspaceStatusControls();
+        renderSidebar();
+    }
+
+    function renderWorkspaceStatusControls() {
+        const trip = getCurrentTrip();
+        if (!trip) return;
+
+        // Ensure boolean properties exist
+        if (trip.transportBooked === undefined) trip.transportBooked = false;
+        if (trip.lodgingBooked === undefined) trip.lodgingBooked = false;
+        if (trip.fullyBooked === undefined) trip.fullyBooked = false;
+
+        // Update Transport Toggle
+        const tBtn = document.getElementById('toggle-transport');
+        const tDot = document.getElementById('dot-transport');
+        const tLbl = document.getElementById('label-transport');
+        if (trip.transportBooked) {
+            tBtn.className = 'toggle-btn is-active';
+            tDot.className = 'dot green';
+            tLbl.innerText = 'Transport: Booked';
+        } else {
+            tBtn.className = 'toggle-btn is-inactive';
+            tDot.className = 'dot red';
+            tLbl.innerText = 'Transport: Need to Book';
+        }
+
+        // Update Lodging Toggle
+        const lBtn = document.getElementById('toggle-lodging');
+        const lDot = document.getElementById('dot-lodging');
+        const lLbl = document.getElementById('label-lodging');
+        if (trip.lodgingBooked) {
+            lBtn.className = 'toggle-btn is-active';
+            lDot.className = 'dot green';
+            lLbl.innerText = 'Lodging: Booked';
+        } else {
+            lBtn.className = 'toggle-btn is-inactive';
+            lDot.className = 'dot red';
+            lLbl.innerText = 'Lodging: Need to Book';
+        }
+
+        // Update Fully Booked Toggle
+        const fBtn = document.getElementById('toggle-fully');
+        const fDot = document.getElementById('dot-fully');
+        const fLbl = document.getElementById('label-fully');
+        if (trip.fullyBooked) {
+            fBtn.className = 'toggle-btn is-active';
+            fDot.className = 'dot green';
+            fLbl.innerText = 'Fully Booked: Yes';
+        } else {
+            fBtn.className = 'toggle-btn is-inactive';
+            fDot.className = 'dot red';
+            fLbl.innerText = 'Fully Booked: Not Yet';
+        }
+    }
+
+    function updateTripMeta() {
+        const trip = getCurrentTrip();
+        if (!trip) return;
+        trip.location = document.getElementById('current-loc').value || "Untitled Trip";
+        trip.startDate = document.getElementById('current-start').value;
+        trip.endDate = document.getElementById('current-end').value;
+        saveData();
+        renderSidebar();
+    }
+
+    function updateTripNotes() {
+        const trip = getCurrentTrip();
+        if (!trip) return;
+        trip.notes = document.getElementById('trip-notes').value;
+        saveData();
+    }
+
+    function createNewTrip() {
+        cancelAllEdits();
+        const newTrip = {
+            id: Date.now(),
+            location: "New Destination",
+            startDate: "",
+            endDate: "",
+            transportBooked: false,
+            lodgingBooked: false,
+            fullyBooked: false,
+            notes: "",
+            transport: [],
+            lodging: [],
+            activities: []
+        };
+        trips.push(newTrip);
+        currentTripId = newTrip.id;
+        saveData();
+        renderAll();
+    }
+
+    function deleteCurrentTrip() {
+        if (trips.length <= 1) {
+            alert("You must keep at least one trip in the planner.");
+            return;
+        }
+        if (confirm("Are you sure you want to delete this trip?")) {
+            cancelAllEdits();
+            trips = trips.filter(t => t.id !== currentTripId);
+            currentTripId = trips[0].id;
+            saveData();
+            renderAll();
+        }
+    }
+
+    function selectTrip(id) {
+        cancelAllEdits();
+        currentTripId = id;
+        renderAll();
+    }
+
+    function toggleCustomTransport() {
+        const typeSelect = document.getElementById('trans-type');
+        const customInput = document.getElementById('trans-custom');
+        customInput.style.display = typeSelect.value === 'Other' ? 'block' : 'none';
+    }
+
+    /* --- TRANSPORT ADD & EDIT --- */
+    function submitTransport() {
+        const trip = getCurrentTrip();
+        let type = document.getElementById('trans-type').value;
+        if (type === 'Other') {
+            const custom = document.getElementById('trans-custom').value.trim();
+            type = custom ? custom : 'Other Transit';
+        }
+        const start = document.getElementById('trans-start').value;
+        const end = document.getElementById('trans-end').value;
+        const booking = document.getElementById('trans-booking').value.trim();
+
+        if (!start) {
+            alert("Please pick a departure/start date and time for transport.");
+            return;
+        }
+
+        const transData = { type, start, end, booking };
+
+        if (editState.transport !== null) {
+            trip.transport[editState.transport] = transData;
+            editState.transport = null;
+        } else {
+            trip.transport.push(transData);
+        }
+
+        resetTransportForm();
+        saveData();
+        renderAll();
+    }
+
+    function editTransport(index) {
+        const trip = getCurrentTrip();
+        const t = trip.transport[index];
+        if (!t) return;
+
+        editState.transport = index;
+
+        const knownTypes = ["Flight", "Private Auto", "Rental Car", "Train", "Bus / Shuttle", "Ferry"];
+        const typeSelect = document.getElementById('trans-type');
+        const customInput = document.getElementById('trans-custom');
+
+        if (knownTypes.includes(t.type)) {
+            typeSelect.value = t.type;
+            customInput.style.display = 'none';
+            customInput.value = '';
+        } else {
+            typeSelect.value = 'Other';
+            customInput.style.display = 'block';
+            customInput.value = t.type;
+        }
+
+        document.getElementById('trans-start').value = t.start || '';
+        document.getElementById('trans-end').value = t.end || '';
+        document.getElementById('trans-booking').value = t.booking || '';
+
+        document.getElementById('trans-submit-btn').innerText = '💾 Update Transport';
+        document.getElementById('trans-cancel-btn').style.display = 'inline-block';
+        document.getElementById('trans-section').classList.add('editing-active');
+
+        document.getElementById('trans-section').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        renderWorkspace();
+    }
+
+    function resetTransportForm() {
+        editState.transport = null;
+        document.getElementById('trans-start').value = '';
+        document.getElementById('trans-end').value = '';
+        document.getElementById('trans-booking').value = '';
+        document.getElementById('trans-custom').value = '';
+        document.getElementById('trans-type').value = 'Flight';
+        toggleCustomTransport();
+
+        document.getElementById('trans-submit-btn').innerText = '+ Add Transport';
+        document.getElementById('trans-cancel-btn').style.display = 'none';
+        document.getElementById('trans-section').classList.remove('editing-active');
+    }
+
+    /* --- LODGING ADD & EDIT --- */
+    function submitLodging() {
+        const trip = getCurrentTrip();
+        const name = document.getElementById('lodge-name').value.trim();
+        const start = document.getElementById('lodge-start').value;
+        const end = document.getElementById('lodge-end').value;
+        const location = document.getElementById('lodge-loc').value.trim();
+        const booking = document.getElementById('lodge-booking').value.trim();
+
+        if (!name || !start) {
+            alert("Please enter the lodging name and check-in date/time.");
+            return;
+        }
+
+        const lodgeData = { name, start, end, location, booking };
+
+        if (editState.lodging !== null) {
+            trip.lodging[editState.lodging] = lodgeData;
+            editState.lodging = null;
+        } else {
+            trip.lodging.push(lodgeData);
+        }
+
+        resetLodgingForm();
+        saveData();
+        renderAll();
+    }
+
+    function editLodging(index) {
+        const trip = getCurrentTrip();
+        const l = trip.lodging[index];
+        if (!l) return;
+
+        editState.lodging = index;
+
+        document.getElementById('lodge-name').value = l.name || '';
+        document.getElementById('lodge-start').value = l.start || '';
+        document.getElementById('lodge-end').value = l.end || '';
+        document.getElementById('lodge-loc').value = l.location || '';
+        document.getElementById('lodge-booking').value = l.booking || '';
+
+        document.getElementById('lodge-submit-btn').innerText = '💾 Update Lodging';
+        document.getElementById('lodge-cancel-btn').style.display = 'inline-block';
+        document.getElementById('lodge-section').classList.add('editing-active');
+
+        document.getElementById('lodge-section').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        renderWorkspace();
+    }
+
+    function resetLodgingForm() {
+        editState.lodging = null;
+        document.getElementById('lodge-name').value = '';
+        document.getElementById('lodge-start').value = '';
+        document.getElementById('lodge-end').value = '';
+        document.getElementById('lodge-loc').value = '';
+        document.getElementById('lodge-booking').value = '';
+
+        document.getElementById('lodge-submit-btn').innerText = '+ Add Lodging';
+        document.getElementById('lodge-cancel-btn').style.display = 'none';
+        document.getElementById('lodge-section').classList.remove('editing-active');
+    }
+
+    /* --- ACTIVITY ADD & EDIT --- */
+    function submitActivity() {
+        const trip = getCurrentTrip();
+        const name = document.getElementById('act-name').value.trim();
+        const start = document.getElementById('act-start').value;
+        const booking = document.getElementById('act-booking').value.trim();
+
+        if (!name || !start) {
+            alert("Please enter the activity name and date/time.");
+            return;
+        }
+
+        const actData = { name, start, booking };
+
+        if (editState.activities !== null) {
+            trip.activities[editState.activities] = actData;
+            editState.activities = null;
+        } else {
+            trip.activities.push(actData);
+        }
+
+        resetActivityForm();
+        saveData();
+        renderAll();
+    }
+
+    function editActivity(index) {
+        const trip = getCurrentTrip();
+        const a = trip.activities[index];
+        if (!a) return;
+
+        editState.activities = index;
+
+        document.getElementById('act-name').value = a.name || '';
+        document.getElementById('act-start').value = a.start || '';
+        document.getElementById('act-booking').value = a.booking || '';
+
+        document.getElementById('act-submit-btn').innerText = '💾 Update Activity';
+        document.getElementById('act-cancel-btn').style.display = 'inline-block';
+        document.getElementById('act-section').classList.add('editing-active');
+
+        document.getElementById('act-section').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        renderWorkspace();
+    }
+
+    function resetActivityForm() {
+        editState.activities = null;
+        document.getElementById('act-name').value = '';
+        document.getElementById('act-start').value = '';
+        document.getElementById('act-booking').value = '';
+
+        document.getElementById('act-submit-btn').innerText = '+ Add Activity';
+        document.getElementById('act-cancel-btn').style.display = 'none';
+        document.getElementById('act-section').classList.remove('editing-active');
+    }
+
+    function cancelEdit(category) {
+        if (category === 'transport') resetTransportForm();
+        if (category === 'lodging') resetLodgingForm();
+        if (category === 'activities') resetActivityForm();
+        renderWorkspace();
+    }
+
+    function cancelAllEdits() {
+        resetTransportForm();
+        resetLodgingForm();
+        resetActivityForm();
+    }
+
+    function removeItem(category, index) {
+        const trip = getCurrentTrip();
+
+        if (editState[category] === index) {
+            cancelEdit(category);
+        } else if (editState[category] !== null && editState[category] > index) {
+            editState[category]--;
+        }
+
+        trip[category].splice(index, 1);
+        saveData();
+        renderAll();
+    }
+
+    function formatDateTime(dtStr) {
+        if (!dtStr) return "";
+        const d = new Date(dtStr);
+        if (isNaN(d)) return dtStr;
+        const hasTime = dtStr.includes("T");
+        return d.toLocaleDateString('en-US', {
+            month: 'short', day: 'numeric', year: 'numeric',
+            ...(hasTime ? { hour: '2-digit', minute: '2-digit' } : {})
+        });
+    }
+
+    function renderWorkspace() {
+        const trip = getCurrentTrip();
+        if (!trip) return;
+
+        document.getElementById('current-loc').value = trip.location;
+        document.getElementById('current-start').value = trip.startDate;
+        document.getElementById('current-end').value = trip.endDate;
+        document.getElementById('trip-notes').value = trip.notes || '';
+
+        renderWorkspaceStatusControls();
+
+        // Render Saved Transport List
+        const transList = document.getElementById('trans-list');
+        transList.innerHTML = '';
+        trip.transport.forEach((t, i) => {
+            const isEditing = editState.transport === i;
+            transList.innerHTML += `
+                <div class="saved-item-card ${isEditing ? 'is-being-edited' : ''}">
+                    <div class="saved-item-info">
+                        <strong>[${t.type}]</strong> ${formatDateTime(t.start)} ${t.end ? '&rarr; ' + formatDateTime(t.end) : ''}
+                        ${t.booking ? ' | <em>' + t.booking + '</em>' : ''}
+                        ${isEditing ? ' <span style="font-size:11px; font-weight:700; color:var(--primary);">(Editing...)</span>' : ''}
+                    </div>
+                    <div class="item-actions">
+                        <button class="btn-edit" onclick="editTransport(${i})">✏️ Edit</button>
+                        <button class="btn-danger" onclick="removeItem('transport', ${i})">✕</button>
+                    </div>
+                </div>
+            `;
+        });
+
+        // Render Saved Lodging List
+        const lodgeList = document.getElementById('lodge-list');
+        lodgeList.innerHTML = '';
+        trip.lodging.forEach((l, i) => {
+            const isEditing = editState.lodging === i;
+            lodgeList.innerHTML += `
+                <div class="saved-item-card ${isEditing ? 'is-being-edited' : ''}">
+                    <div class="saved-item-info">
+                        <strong>${l.name}</strong> (In: ${formatDateTime(l.start)} &rarr; Out: ${formatDateTime(l.end)})
+                        ${l.location ? ' | 📍 ' + l.location : ''}
+                        ${l.booking ? ' | <em>Ref: ' + l.booking + '</em>' : ''}
+                        ${isEditing ? ' <span style="font-size:11px; font-weight:700; color:var(--primary);">(Editing...)</span>' : ''}
+                    </div>
+                    <div class="item-actions">
+                        <button class="btn-edit" onclick="editLodging(${i})">✏️ Edit</button>
+                        <button class="btn-danger" onclick="removeItem('lodging', ${i})">✕</button>
+                    </div>
+                </div>
+            `;
+        });
+
+        // Render Saved Activity List
+        const actList = document.getElementById('act-list');
+        actList.innerHTML = '';
+        trip.activities.forEach((a, i) => {
+            const isEditing = editState.activities === i;
+            actList.innerHTML += `
+                <div class="saved-item-card ${isEditing ? 'is-being-edited' : ''}">
+                    <div class="saved-item-info">
+                        <strong>${a.name}</strong> &bull; ${formatDateTime(a.start)}
+                        ${a.booking ? ' | <em>' + a.booking + '</em>' : ''}
+                        ${isEditing ? ' <span style="font-size:11px; font-weight:700; color:var(--primary);">(Editing...)</span>' : ''}
+                    </div>
+                    <div class="item-actions">
+                        <button class="btn-edit" onclick="editActivity(${i})">✏️ Edit</button>
+                        <button class="btn-danger" onclick="removeItem('activities', ${i})">✕</button>
+                    </div>
+                </div>
+            `;
+        });
+
+        renderItinerary(trip);
+    }
+
+    function renderItinerary(trip) {
+        const timeline = document.getElementById('itinerary-timeline');
+        timeline.innerHTML = '';
+
+        let events = [];
+
+        // 1. Add all transport legs (Outbound, Inter-stay, Return)
+        trip.transport.forEach(t => {
+            if (t.start) {
+                events.push({
+                    time: new Date(t.start).getTime(),
+                    dateLabel: formatDateTime(t.start),
+                    title: `✈️🚗 Transit: ${t.type}`,
+                    meta: `${t.end ? 'Arriving: ' + formatDateTime(t.end) : ''} ${t.booking ? ' • Booking / Notes: ' + t.booking : ''}`,
+                    isCheckout: false
+                });
+            }
+        });
+
+        // 2. Add BOTH Check-In and Check-Out events for every lodging stay
+        trip.lodging.forEach(l => {
+            if (l.start) {
+                events.push({
+                    time: new Date(l.start).getTime(),
+                    dateLabel: formatDateTime(l.start),
+                    title: `🏨 Check-In: ${l.name}`,
+                    meta: `${l.location ? '📍 ' + l.location : ''} ${l.booking ? ' • Confirmation: ' + l.booking : ''}`,
+                    isCheckout: false
+                });
+            }
+            if (l.end) {
+                events.push({
+                    time: new Date(l.end).getTime(),
+                    dateLabel: formatDateTime(l.end),
+                    title: `🏨 Check-Out: ${l.name}`,
+                    meta: `Check-Out completed ${l.booking ? ' • Conf: ' + l.booking : ''}`,
+                    isCheckout: true
+                });
+            }
+        });
+
+        // 3. Add all planned activities
+        trip.activities.forEach(a => {
+            if (a.start) {
+                events.push({
+                    time: new Date(a.start).getTime(),
+                    dateLabel: formatDateTime(a.start),
+                    title: `🎟️ Activity: ${a.name}`,
+                    meta: `${a.booking ? 'Tickets / Info: ' + a.booking : 'Scheduled'}`,
+                    isCheckout: false
+                });
+            }
+        });
+
+        // Sort all items in strict chronological order
+        events.sort((a, b) => a.time - b.time);
+
+        if (events.length === 0) {
+            timeline.innerHTML = `<p style="color:var(--muted);">Add transport, lodging, or activities above to automatically build your chronological itinerary.</p>`;
+            return;
+        }
+
+        events.forEach(ev => {
+            timeline.innerHTML += `
+                <div class="timeline-item ${ev.isCheckout ? 'checkout' : ''}">
+                    <div class="timeline-date">${ev.dateLabel}</div>
+                    <div class="timeline-title">${ev.title}</div>
+                    <div class="timeline-meta">${ev.meta}</div>
+                </div>
+            `;
+        });
+    }
+
+    function renderSidebar() {
+        const list = document.getElementById('sidebar-trip-list');
+        list.innerHTML = '';
+
+        trips.forEach(trip => {
+            const activeClass = trip.id === currentTripId ? 'active' : '';
+            const dateRange = (trip.startDate || trip.endDate)
+                ? `${formatDateTime(trip.startDate)} – ${formatDateTime(trip.endDate)}`
+                : 'Dates not set';
+
+            // User-controlled statuses
+            const transBooked = !!trip.transportBooked;
+            const lodgeBooked = !!trip.lodgingBooked;
+            const fullBooked = !!trip.fullyBooked;
+
+            list.innerHTML += `
+                <div class="trip-card ${activeClass}" onclick="selectTrip(${trip.id})">
+                    <div class="trip-card-header">
+                        <div class="trip-card-loc">${trip.location}</div>
+                    </div>
+                    <div class="trip-card-dates">${dateRange}</div>
+                    <div class="status-grid">
+                        <div class="status-pill ${transBooked ? 'green' : 'red'}">
+                            <span class="dot ${transBooked ? 'green' : 'red'}"></span> Transport
+                        </div>
+                        <div class="status-pill ${lodgeBooked ? 'green' : 'red'}">
+                            <span class="dot ${lodgeBooked ? 'green' : 'red'}"></span> Lodging
+                        </div>
+                        <div class="status-pill ${fullBooked ? 'green' : 'red'}" style="grid-column: span 2;">
+                            <span class="dot ${fullBooked ? 'green' : 'red'}"></span> ${fullBooked ? 'Fully Booked' : 'Booking in Progress'}
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function renderAll() {
+        renderWorkspace();
+        renderSidebar();
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        loadData();
+        renderAll();
+    });
+</script>
+
+</body>
+</html>
